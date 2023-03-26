@@ -16,13 +16,16 @@ pub fn main() !void {
     try bw.flush(); // don't forget to flush!
 }
 
+// start in 0th pos
+// check next elem
+//  if > swap
 fn bubble_sort(array: []u32) void {
-    var i: u32 = 0;
+    var i: u32 = 2;
     var j: u32 = 0;
     while (i < array.len): (i += 1) {
-        j = i;
-        while(j < array.len - 1): (j += 1) {
-            if (array[j] > array[i]) {
+        j = 0;
+        while(j < array.len - i): (j += 1) {
+            if (array[j] > array[j + 1]) {
                 const temp = array[j];
                 array[j] = array[j + 1];
                 array[j + 1] = temp;
@@ -33,7 +36,7 @@ fn bubble_sort(array: []u32) void {
 
 test "simple test" {
     var array = [_]u32{ 12, 42, 1, 404, 23, 4_994, 1_211_452, 13_124, 76_342, 4_133};
-    std.debug.print("Before: {any}\n", .{array});
     bubble_sort(&array);
-    std.debug.print("Result: {any}\n", .{array});
+    const sorted_example = [_]u32{ 1, 12, 23, 42, 404, 4_133, 4_994, 13_124, 76_342, 1_211_452 };
+    try std.testing.expectEqualSlices(u32, &array, &sorted_example);
 }
