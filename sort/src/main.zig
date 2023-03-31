@@ -38,5 +38,5 @@ test "simple test" {
     var array = [_]u32{ 12, 42, 1, 404, 23, 4_994, 1_211_452, 13_124, 76_342, 4_133};
     bubble_sort(&array);
     const sorted_example = [_]u32{ 1, 12, 23, 42, 404, 4_133, 4_994, 13_124, 76_342, 1_211_452 };
-    try std.testing.expectEqualSlices(u32, &array, &sorted_example);
+    std.testing.expectEqualSlices(u32, &array, &sorted_example);
 }
