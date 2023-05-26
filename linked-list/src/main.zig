@@ -1,24 +1,31 @@
 const std = @import("std");
 
-fn LinkedList(comptime T: type) type {
+fn DoublyLinkedList(comptime T: type) type {
     return struct {
         pub const Node = struct {
             data: T,
-            next: ?*Node,
-            prev: ?*Node
+            next: ?*Node = null,
+            prev: ?*Node = null
         };
 
-        first: ?*Node,
-        last: ?*Node,
-        len: usize,
-        fn head(self: @This()) Node {
-            return self.first;
+        first: ?*Node = null,
+        last: ?*Node = null,
+        len: usize = 0,
+        fn head(self: @This()) ?Node {
+            return self.first.?;
         }
-        fn tail(self: @This()) Node {
-            return self.last;
+        fn tail(self: @This()) ?Node {
+            return self.last.?;
         }
-        fn size(self: @This()) Node {
+        fn size(self: @This()) usize {
             return self.len;
+        }
+        fn search(self: @This(), value: T) anyerror!?Node {
+            var current = self.first;
+            while (current != null): (current = current.next) {
+                if (current.data == value) return current;
+            }
+            return null;
         }
         fn insert_front(self: @This(), data: T) anyerror!void {
             const new_node = Node { .data = data, .next = self.first };
@@ -41,32 +48,32 @@ fn LinkedList(comptime T: type) type {
                 return null;
             }
             if (self.len == 1) {
-                const last = self.last;
+                const last_elem = self.last;
                 self.last = null;
-                self.first = null;
-                return last;
+                self.first.* = null;
+                return last_elem;
             }
 
-            const last = self.last;
+            const last_elem = self.last;
             self.last = self.last.prev;
             self.len -= 1;
-            return last;
+            return last_elem;
         }
         fn pop_front(self: @This()) anyerror!Node {
             if (self.len == 0) {
                 return null;
             }
             if (self.len == 1) {
-                const last = self.last;
-                self.last = null;
-                self.first = null;
-                return last;
+                const last_elem = self.last;
+                self.last.* = null;
+                self.first.* = null;
+                return last_elem;
             }
 
-            const last = self.last;
+            const last_elem = self.last;
             self.last = self.last.prev;
             self.len -= 1;
-            return last;
+            return last_elem;
         }
         fn pop_nth(self: @This(), n: u32) anyerror!Node {
             // if empty or n > len, return null
@@ -74,7 +81,27 @@ fn LinkedList(comptime T: type) type {
             //                               f
             // _ <== | 1 | <==> | 2 | <==> | 3 | <==> | 4 | ==> _
             // _ <== | 1 | ==> _
+            if (self.len == 0 or n > self.len) {
+                return null;
+            }
 
+            var i = 0;
+            var current = self.first.*;
+            while(i < n): (i += 1) {
+                current = current.next;
+            }
+            const prev = current.prev;
+            prev.next = current.next;
+            current.next.prev = prev;
+        }
+        fn print(self: @This()) void {
+            // const prepend = std.fmt.format("DoublyLinkedList {{ len: {d}, list: [] }};
+            if (self.len < 0) std.debug.print("DoublyLinkedList {{ len: 0, list: [] }}", .{});
+            var current = self.first;
+            const buffer: [4096]u8 = undefined;
+            buffer[0..].* = "hellp world";
+            while (current != null): (current = current.next) {
+            }
         }
     };
 }
@@ -96,7 +123,18 @@ pub fn main() !void {
 }
 
 test "Test LinkList insert" {
-    const LL = LinkedList(u32) {};
-    LL.insert_front(6700);
+    const LL = DoublyLinkedList(u32) {};
+    try LL.insert_front(6700);
+    try std.testing.expect(LL.len == 1);
+    try std.testing.expect(try LL.search(6700) != null);
+}
+
+test "Array tests" {
+    var buffer: [100]u8 = undefined;
+    std.debug.print("{any}", .{ buffer });
+    const buffer2 = buffer ++ [_]u8{'H', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+    std.debug.print("{any}", .{buffer2});
+    // buffer[50..75].* = "Goodbye world";
+    // buffer[55..].* = &"Yo mama!";
 }
 
