@@ -8,26 +8,31 @@ fn DoublyLinkedList(comptime T: type) type {
             prev: ?*Node = null
         };
 
-        first: ?*Node = null,
-        last: ?*Node = null,
-        len: usize = 0,
-        fn head(self: @This()) ?Node {
+        var first: ?*Node = null;
+        var last: ?*Node = null;
+        var len: usize = 0;
+
+        pub fn head(self: @This()) ?Node {
             return self.first.?;
         }
-        fn tail(self: @This()) ?Node {
+
+        pub fn tail(self: @This()) ?Node {
             return self.last.?;
         }
-        fn size(self: @This()) usize {
+
+        pub fn size(self: @This()) usize {
             return self.len;
         }
-        fn search(self: @This(), value: T) anyerror!?Node {
+
+        pub fn search(self: @This(), value: T) anyerror!?Node {
             var current = self.first;
             while (current != null): (current = current.next) {
                 if (current.data == value) return current;
             }
             return null;
         }
-        fn insert_front(self: @This(), data: T) anyerror!void {
+
+        pub fn insert_front(self: @This(), data: T) anyerror!void {
             const new_node = Node { .data = data, .next = self.first };
             if (self.len == 0) {
                 self.first = new_node;
@@ -35,7 +40,8 @@ fn DoublyLinkedList(comptime T: type) type {
             self.first = new_node;
             self.len += 1;
         }
-        fn insert_back(self: @This(), data: T) anyerror!void {
+
+        pub fn insert_back(self: @This(), data: T) anyerror!void {
             const new_node = Node { .data = data, .prev = self.last };
             if (self.len == 0) {
                 self.first = new_node;
@@ -43,7 +49,8 @@ fn DoublyLinkedList(comptime T: type) type {
             self.last = new_node;
             self.len += 1;
         }
-        fn pop_back(self: @This()) anyerror!Node {
+
+        pub fn pop_back(self: @This()) anyerror!Node {
             if (self.len == 0) {
                 return null;
             }
@@ -59,7 +66,8 @@ fn DoublyLinkedList(comptime T: type) type {
             self.len -= 1;
             return last_elem;
         }
-        fn pop_front(self: @This()) anyerror!Node {
+
+        pub fn pop_front(self: @This()) anyerror!Node {
             if (self.len == 0) {
                 return null;
             }
@@ -75,7 +83,8 @@ fn DoublyLinkedList(comptime T: type) type {
             self.len -= 1;
             return last_elem;
         }
-        fn pop_nth(self: @This(), n: u32) anyerror!Node {
+
+        pub fn pop_nth(self: @This(), n: u32) anyerror!Node {
             // if empty or n > len, return null
             // if more than 1, iter til we reach n
             //                               f
@@ -94,7 +103,8 @@ fn DoublyLinkedList(comptime T: type) type {
             prev.next = current.next;
             current.next.prev = prev;
         }
-        fn print(self: @This()) void {
+
+        pub fn print(self: @This()) void {
             // const prepend = std.fmt.format("DoublyLinkedList {{ len: {d}, list: [] }};
             if (self.len < 0) std.debug.print("DoublyLinkedList {{ len: 0, list: [] }}", .{});
             var current = self.first;
@@ -125,7 +135,7 @@ pub fn main() !void {
 test "Test LinkList insert" {
     const LL = DoublyLinkedList(u32) {};
     try LL.insert_front(6700);
-    try std.testing.expect(LL.len == 1);
+    try std.testing.expect(LL.size() == 1);
     try std.testing.expect(try LL.search(6700) != null);
 }
 
