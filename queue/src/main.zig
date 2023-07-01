@@ -14,7 +14,7 @@ fn Queue(comptime T: type) type {
         var head: ?*Node = null;
         var len: usize = 0;
 
-        alloc: std.mem.Allocator,
+        allocator: std.mem.Allocator,
 
         pub const Node = struct {
             data: T,
@@ -25,7 +25,7 @@ fn Queue(comptime T: type) type {
             return self.len;
         }
 
-        pub fn search(self: Self, value: T) anyerror!?Node {
+        pub fn search(self: Self, value: T) !?Node {
             var current = self.first;
             while (current != null): (current = current.next) {
                 if (current.data == value) return current;
@@ -33,13 +33,19 @@ fn Queue(comptime T: type) type {
             return null;
         }
 
-        pub fn enqueue(self: Self, data: T) anyerror!void {
-            const new_node = Node { .data = data, .next = self.head };
-            if (self.len == 0) {
-                self.tail = new_node;
+        pub fn enqueue(self: Self, data: T) !void {
+            const new_node = try self.allocator.create(Node);
+            new_node.*.data = data;
+            new_node.*.next = head;
+
+            if (len == 0) {
+                tail = new_node;
+            } else {
+                tail = tail.?.*.next;
             }
-            self.head = new_node;
-            self.len += 1;
+
+            head = new_node;
+            len += 1;
         }
 
         pub fn dequeue(self: Self) !?Node {
@@ -47,7 +53,7 @@ fn Queue(comptime T: type) type {
                 return null;
             }
 
-            const last_elem = self.tail.*;
+            const last_elem = self.tail;
             if (self.len == 1) {
                 self.tail = null;
                 self.head = null;
@@ -57,7 +63,14 @@ fn Queue(comptime T: type) type {
                 return last_elem;
             }
 
+            var current_ptr = self.head;
+            while(current_ptr.*.next != self.tail) {
+                current_ptr = current_ptr.*.next;
+            }
+            current_ptr.*.next = null;
+
             self.len -= 1;
+            self.allocator.destroy(last_elem);
             return last_elem;
         }
 
@@ -134,8 +147,10 @@ test "Queue" {
     var buffer: [1000]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     const alloc = fba.allocator();
+    const test_val: u16 = 6000;
 
-    var y = try alloc.alloc(u8, 100);
-    defer alloc.free(y);
+    const queue  = Queue(u16) { .allocator = alloc };
+    try queue.enqueue(test_val);
+    std.testing.expect((try queue.peek().?) == test_val);
 }
 
