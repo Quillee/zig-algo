@@ -21,8 +21,8 @@ fn Queue(comptime T: type) type {
             next: ?*Node = null,
         };
 
-        pub fn size(self: Self) usize {
-            return self.len;
+        pub fn size(_: Self) usize {
+            return len;
         }
 
         pub fn search(self: Self, value: T) !?Node {
@@ -40,42 +40,42 @@ fn Queue(comptime T: type) type {
 
             if (len == 0) {
                 tail = new_node;
-            } else {
-                tail = tail.?.*.next;
             }
-
             head = new_node;
             len += 1;
         }
 
-        pub fn dequeue(self: Self) !?Node {
-            if (self.len == 0) {
+        pub fn dequeue(self: Self) ?*Node {
+            if (len == 0) {
                 return null;
             }
 
-            const last_elem = self.tail;
-            if (self.len == 1) {
-                self.tail = null;
-                self.head = null;
+            const last_elem = tail.?;
+            if (len == 1) {
+                tail = null;
+                head = null;
 
-                self.len = 0;
+                len = 0;
 
                 return last_elem;
             }
 
-            var current_ptr = self.head;
-            while(current_ptr.*.next != self.tail) {
-                current_ptr = current_ptr.*.next;
+            var current_ptr = head.?;
+            while(current_ptr.next != tail.?) {
+                current_ptr = current_ptr.next.?;
             }
-            current_ptr.*.next = null;
+            current_ptr.next = null;
 
-            self.len -= 1;
+            len -= 1;
             self.allocator.destroy(last_elem);
             return last_elem;
         }
 
-        pub fn peek(self: Self) ?T {
-            return self.tail.?.*.data;
+        pub fn peek(_: Self) ?T {
+            if (tail) |val| {
+                return val.data;
+            }
+            return null;
         }
 
         pub fn print(self: Self) void {
@@ -105,7 +105,13 @@ test "Array" {
     var x = [_]u8 {'h', 'e', 'l'};
     var x_ptr = &x;
     var slice_x_ptr = x_ptr[1..];
-    std.debug.print("Type of x: {any}, Type of x ptr: {any}, Type of slice of x ptr, len: {any}, {d}\n\n", .{ @TypeOf(x), @TypeOf(x_ptr), @TypeOf(slice_x_ptr), slice_x_ptr.len });
+    std.debug.print("Type of x: {any}, Type of x ptr: {any}, Type of slice of x ptr, len: {any}, {d}\n\n",
+        .{
+            @TypeOf(x),
+            @TypeOf(x_ptr),
+            @TypeOf(slice_x_ptr),
+            slice_x_ptr.len
+        });
 
 
     var buffer: [1000]u8 = undefined;
@@ -140,7 +146,7 @@ test "New zig struct" {
     ns.isValid = true;
     ns.name[user.len..(user.len*2)].* = user.*;
 
-    std.debug.print("name: {s}, y: {s}", .{ ns.name[0..ns.name.len], y[0..ns.name.len] });
+    // std.debug.print("name: {s}, y: {s}", .{ ns.name[0..ns.name.len], y[0..ns.name.len] });
 }
 
 test "Queue" {
@@ -150,7 +156,29 @@ test "Queue" {
     const test_val: u16 = 6000;
 
     const queue  = Queue(u16) { .allocator = alloc };
+
+    // @test: enqueue and element is available
     try queue.enqueue(test_val);
-    std.testing.expect((try queue.peek().?) == test_val);
+    var top_val = queue.peek().?;
+    try std.testing.expect(top_val == test_val);
+
+    // @test: enqueue another element and see new peek
+    try queue.enqueue(test_val + 1000);
+    top_val = queue.peek() orelse {
+        std.debug.print("Error! Item isn't available", .{});
+        return;
+    };
+    try std.testing.expect(top_val == test_val);
+
+    // @test: dequeue until empty
+    while (queue.size() != 0) {
+        const node_data = queue.peek() orelse break;
+
+        std.debug.print("Removing value {d}", .{ node_data });
+        if (queue.dequeue() == null) {
+            std.debug.print("Uh-oh, dequeuing an empty queue? Will this loop end?", .{});
+        }
+    }
+    try std.testing.expect(queue.size() == 0);
 }
 
